@@ -13,7 +13,8 @@ if (!cfg || !cfg.apiKey || cfg.apiKey.indexOf('ВСТАВЬТЕ') === 0) {
   const app = initializeApp(cfg);
   const auth = getAuth(app);
   const db = initializeFirestore(app, {
-    localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() })
+    localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }),
+    experimentalAutoDetectLongPolling: true
   });
 
   let ref = null, unsub = null, timer = null, applying = false;

@@ -1,4 +1,4 @@
-const CACHE = 'expenses-v2';
+const CACHE = 'expenses-v3';
 const FILES = ['./', './index.html', './manifest.json', './sync.js', './firebase-config.js', './icons/icon-192.png', './icons/icon-512.png'];
 
 self.addEventListener('install', e => {
