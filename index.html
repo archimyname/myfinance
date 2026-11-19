@@ -118,6 +118,8 @@ input,select{font-size:16px!important}
 .box{background:var(--card);border:1px solid var(--cb);border-radius:16px;padding:14px;margin-bottom:12px}.row{display:flex;justify-content:space-between;gap:8px;padding:4px 0;font-size:14px}
 .cal{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-top:8px}.cdh{text-align:center;font-size:11px;color:var(--t3)}.cd{min-height:46px;border-radius:8px;background:var(--inp);border:1px solid var(--cb);font-size:12px;padding:3px;cursor:pointer;display:flex;flex-direction:column;justify-content:space-between}
 .cd.td{border-color:#6366f1}.cd.has{background:rgba(99,102,241,.14)}.cd.ok{background:rgba(34,197,94,.2)}.cd.sel{outline:2px solid #6366f1}.cd i{font-style:normal;font-size:11px;color:var(--t2)}
+.rem{display:none;align-items:flex-start;gap:8px;background:#fff7ed;color:#9a3412;border:1px solid #fed7aa;border-radius:12px;padding:10px 12px;font-size:13px;line-height:1.6;margin-bottom:12px}
+[data-theme=dark] .rem{background:#431407;color:#fdba74;border-color:#7c2d12}
 </style>
 </head>
 <body>
@@ -125,11 +127,12 @@ input,select{font-size:16px!important}
 <div class="ht"><div class="logo">💰</div><div><h1>Мои расходы</h1><p>Ежемесячные обязательные платежи</p></div></div>
 <div class="btns">
 <button class="tt" onclick="openSync()" id="syncBtn" title="Синхронизация">☁️</button>
-<button class="tt" onclick="toggleTheme()" id="themeBtn" title="Сменить тему">🌙</button>
+<button class="tt" onclick="toggleTheme()" id="themeBtn" title="Тема: авто / светлая / тёмная">🌙</button>
 <button class="btn bp" id="addBtn" onclick="toggleForm()">➕ Добавить</button>
 </div></div></div>
 <div class="app">
 <div class="warn" id="warn"></div>
+<div class="rem" id="rem"></div>
 <div class="form" id="syncPanel">
 <div class="ft">☁️ Синхронизация между устройствами</div>
 <div id="syncStatus" class="ed" style="margin-bottom:12px;line-height:1.5"></div>
@@ -146,6 +149,7 @@ input,select{font-size:16px!important}
 <button class="btn bs bsm" onclick="exportData()">📤 Экспорт</button>
 <button class="btn bs bsm" onclick="document.getElementById('importFile').click()">📥 Импорт</button>
 <button class="btn bs bsm" onclick="resetMonth()">🔄 Сбросить оплату</button>
+<button class="btn bs bsm" onclick="exportIcs()">🔔 В календарь</button>
 <input type="file" id="importFile" accept=".json,application/json" style="display:none" onchange="importData(event)">
 </div>
 <div id="installBanner" style="display:none;background:linear-gradient(135deg,#6366f1,#9333ea);color:#fff;padding:16px;border-radius:16px;margin-bottom:16px;text-align:center">
@@ -429,7 +433,7 @@ function renderExtra(){
  var h='<div class="box"><b>📆 За год</b><div class="row"><span>Всего платежей</span><b>'+fmt(yr)+'</b></div>'+['credit','rent','subscription'].map(k=>'<div class="row"><span>'+CATS[k].icon+' '+CATS[k].label+'</span><span>'+fmt(by[k]||0)+' <span class="ed">('+fmt((by[k]||0)/12)+'/мес.)</span></span></div>').join('')+(S.income?'<div class="row"><span>Доля дохода за год</span><span>'+Math.round(yr/(S.income*12)*100)+'%</span></div>':'')+'</div>';
  var cr=reg.filter(e=>e.debt0>0);
  if(cr.length)h+='<div class="box"><b>🏦 Кредиты</b>'+cr.map(e=>{var mo=e.amount>0?Math.ceil(e.debt/e.amount):0,end=new Date(t.getFullYear(),t.getMonth()+mo-1,1).toLocaleDateString('ru-RU',{month:'long',year:'numeric'});return '<div style="margin-top:10px"><div class="row"><span>'+esc(e.name)+'</span><span>'+fmt(e.debt)+'</span></div><div class="cp"><div class="cf" style="width:'+Math.round((1-e.debt/e.debt0)*100)+'%;background:#ef4444"></div></div><div class="cpc">'+(e.debt>0?'Выплачено '+Math.round((1-e.debt/e.debt0)*100)+'% · ещё ~'+mo+' мес. (до '+end+')':'Погашен 🎉')+'</div></div>'}).join('')+'<div class="row" style="margin-top:8px"><span>Всего долгов</span><b>'+fmt(cr.reduce((s,e)=>s+e.debt,0))+'</b></div></div>';
- $('ov').innerHTML=h;
+ $('ov').innerHTML=h;renderRem();
  if(curTab==='cal')renderCal();
 }
 function dayItems(y,m,d){return S.expenses.filter(e=>{if(e.category==='shopping')return false;if(e.dateType==='future'){var x=parseLocal(e.futureDate);return x&&x.getFullYear()===y&&x.getMonth()===m&&x.getDate()===d}return Math.min(parseInt(e.dueDate,10)||1,dim(y,m))===d})}
@@ -444,6 +448,38 @@ function renderCal(){
  $('cal').innerHTML='<div class="row" style="align-items:center"><button class="btn bs bsm" onclick="calNav(-1)">◀</button><b style="text-transform:capitalize">'+calM.toLocaleDateString('ru-RU',{month:'long',year:'numeric'})+'</b><button class="btn bs bsm" onclick="calNav(1)">▶</button></div><div class="cal">'+g+'</div><div class="cpc" style="margin-top:8px">Платежей в месяце: '+fmt(tot)+' · зелёным отмечены дни, где всё оплачено</div>'+(calSel?'<div style="margin-top:8px"><b>'+calSel+'-е число</b>'+(sel.length?sel.map(e=>'<div class="row"><span>'+CATS[e.category].icon+' '+esc(e.name)+(cur&&e.paid?' ✅':'')+'</span><b>'+fmt(e.amount)+'</b></div>').join(''):'<div class="ed">Платежей нет</div>')+'</div>':'');
 }
 
+/* ---------- Напоминания ---------- */
+function renderRem(){
+ var el=$('rem'),t=today0(),late=[],td=[],tm=[];
+ S.expenses.forEach(e=>{if(e.category==='shopping'||e.paid)return;var d=nextDate(e);if(!d)return;var n=Math.round((d-t)/864e5);if(n<0)late.push(e);else if(n===0)td.push(e);else if(n===1)tm.push(e)});
+ if(store.get('remOff')===t.toDateString()||!(late.length+td.length+tm.length)){el.style.display='none';return}
+ var f=(ic,l,a)=>a.length?'<div>'+ic+' <b>'+l+':</b> '+a.map(e=>esc(e.name)+' ('+fmt(e.amount)+')').join(', ')+'</div>':'';
+ el.innerHTML='<div style="flex:1">'+f('🔴','Просрочено',late)+f('⚡','Сегодня',td)+f('⏰','Завтра',tm)+'</div><span class="ib" onclick="remOff()" title="Скрыть до завтра">✕</span>';
+ el.style.display='flex';
+}
+function remOff(){store.set('remOff',today0().toDateString());renderRem()}
+function icsEsc(t){return String(t).replace(/\\/g,'\\\\').replace(/;/g,'\\;').replace(/,/g,'\\,').replace(/\n/g,'\\n')}
+function icsDate(d){return d.getFullYear()+String(d.getMonth()+1).padStart(2,'0')+String(d.getDate()).padStart(2,'0')}
+function exportIcs(){
+ var t=today0(),stamp=new Date().toISOString().replace(/[-:]/g,'').slice(0,15)+'Z',L=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Expenses//RU','CALSCALE:GREGORIAN','X-WR-CALNAME:Платежи'],cnt=0;
+ S.expenses.forEach(e=>{
+  if(e.category==='shopping')return;
+  var d,rr='',day=parseInt(e.dueDate,10)||1;
+  if(e.dateType==='future'){d=parseLocal(e.futureDate);if(!d||d<t)return}
+  else{var y=t.getFullYear(),m=t.getMonth();d=new Date(y,m,Math.min(day,dim(y,m)));if(d<t)d=new Date(y,m+1,Math.min(day,dim(y,m+1)));rr='RRULE:FREQ=MONTHLY;BYMONTHDAY='+(day>=31?-1:day)}
+  var nm=icsEsc(e.name+' — '+fmt(e.amount));
+  L.push('BEGIN:VEVENT','UID:'+e.id+'@expenses','DTSTAMP:'+stamp,'DTSTART;VALUE=DATE:'+icsDate(d),'SUMMARY:'+icsEsc('💳 ')+nm);
+  if(rr)L.push(rr);
+  if(e.note)L.push('DESCRIPTION:'+icsEsc(e.note));
+  L.push('BEGIN:VALARM','ACTION:DISPLAY','DESCRIPTION:Завтра платёж: '+nm,'TRIGGER:-PT15H','END:VALARM','BEGIN:VALARM','ACTION:DISPLAY','DESCRIPTION:Сегодня платёж: '+nm,'TRIGGER:PT9H','END:VALARM','END:VEVENT');cnt++;
+ });
+ if(!cnt){alert('Нет платежей для календаря');return}
+ L.push('END:VCALENDAR');
+ var url=URL.createObjectURL(new Blob([L.join('\r\n')],{type:'text/calendar;charset=utf-8'})),a=document.createElement('a');
+ a.href=url;a.download='platezhi.ics';document.body.appendChild(a);a.click();document.body.removeChild(a);setTimeout(function(){URL.revokeObjectURL(url)},1000);
+ alert('Файл создан (платежей: '+cnt+'). Откройте его, чтобы добавить напоминания в календарь: за день до платежа в 9:00 и в день платежа в 9:00.');
+}
+
 /* ---------- Список покупок ---------- */
 function toggleShoppingList(){shopOpen=!shopOpen;$('sc').classList.toggle('open',shopOpen);$('st').classList.toggle('open',shopOpen)}
 function addShoppingItem(){var i=$('shopInput'),n=i.value.trim();if(!n)return;S.shopping.push({id:uid(),name:n,bought:false});save();renderShop();i.value='';i.focus()}
@@ -455,9 +491,17 @@ function renderShop(){
  }).join(''):'<div class="se">Список покупок пуст</div>';
 }
 
-/* ---------- Тема ---------- */
-function setTheme(t){document.documentElement.setAttribute('data-theme',t);$('themeBtn').textContent=t==='dark'?'☀️':'🌙'}
-function toggleTheme(){var t=document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark';setTheme(t);store.set('theme',t)}
+/* ---------- Тема: авто / светлая / тёмная ---------- */
+var themeMode='auto',mq=window.matchMedia?window.matchMedia('(prefers-color-scheme: dark)'):null;
+function setTheme(mode){
+ themeMode=mode;
+ var eff=mode==='auto'?(mq&&mq.matches?'dark':'light'):mode;
+ document.documentElement.setAttribute('data-theme',eff);
+ $('themeBtn').textContent=mode==='auto'?'🌗':mode==='dark'?'🌙':'☀️';
+ var m=document.querySelector('meta[name=theme-color]');if(m)m.content=eff==='dark'?'#0f172a':'#6366f1';
+}
+function toggleTheme(){var n={auto:'light',light:'dark',dark:'auto'}[themeMode]||'auto';setTheme(n);store.set('theme2',n)}
+function initTheme(){setTheme(store.get('theme2')||'auto');if(mq){var f=function(){if(themeMode==='auto')setTheme('auto')};mq.addEventListener?mq.addEventListener('change',f):mq.addListener(f)}}
 
 /* ---------- Связка с облаком (sync.js) ---------- */
 window.App={
@@ -487,7 +531,7 @@ if('serviceWorker' in navigator)window.addEventListener('load',function(){naviga
 
 /* ---------- Запуск ---------- */
 (function init(){
- try{setTheme(store.get('theme')||'light')}catch(e){}
+ try{initTheme()}catch(e){}
  setSyncStatus('☁️','Синхронизация не подключена: проверьте файл firebase-config.js и интернет. Данные пока хранятся только на этом устройстве.',false);
  try{load()}catch(e){console.error(e)}
  try{render();renderShop();setTab('list')}catch(e){console.error(e);alert('Ошибка отображения: '+e.message)}
