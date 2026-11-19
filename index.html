@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#6366f1">
+<meta name="apple-mobile-web-app-title" content="Расходы">
+<link rel="manifest" href="manifest.json">
+<script src="firebase-config.js"></script>
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%236366f1'/%3E%3Ctext x='50' y='65' font-size='50' text-anchor='middle'%3E💰%3C/text%3E%3C/svg%3E">
+<title>Мои ежемесячные расходы</title>
+<style>
+:root{--bg:linear-gradient(135deg,#f8fafc,#eff6ff 50%,#eef2ff);--card:#fff;--cb:#f1f5f9;--t1:#1e293b;--t2:#64748b;--t3:#94a3b8;--inp:#fff;--ib:#e2e8f0;--hd:rgba(255,255,255,.95)}
+[data-theme=dark]{--bg:linear-gradient(135deg,#0f172a,#1e1b4b 50%,#312e81);--card:#1e293b;--cb:#334155;--t1:#f1f5f9;--t2:#cbd5e1;--t3:#64748b;--inp:#0f172a;--ib:#475569;--hd:rgba(15,23,42,.95)}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;background:var(--bg);background-attachment:fixed;min-height:100vh;overflow-x:hidden;color:var(--t1)}
+input,select{font-size:16px!important}
+.app{max-width:1200px;margin:0 auto;padding:16px}
+.header{background:var(--hd);border-bottom:1px solid var(--ib);padding:16px;position:sticky;top:0;z-index:5;backdrop-filter:blur(8px)}
+.hc{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;max-width:1200px;margin:0 auto}
+.ht{display:flex;align-items:center;gap:12px}
+.logo{width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,#6366f1,#9333ea);display:flex;align-items:center;justify-content:center;font-size:20px}
+.ht h1{font-size:20px}.ht p{font-size:12px;color:var(--t2)}
+.btns{display:flex;gap:8px;align-items:center}
+.btn{padding:12px 16px;border-radius:12px;font-size:14px;font-weight:500;border:none;cursor:pointer;min-height:48px;display:flex;align-items:center;gap:6px;user-select:none}
+.btn:active{opacity:.8}
+.bp{background:linear-gradient(135deg,#6366f1,#9333ea);color:#fff}
+.bs{background:var(--card);color:var(--t2);border:1px solid var(--ib)}
+.bsm{padding:8px 12px;font-size:12px;min-height:36px;border-radius:8px}
+.tt{width:40px;height:40px;border-radius:50%;background:var(--card);border:1px solid var(--ib);cursor:pointer;font-size:20px}
+.tools{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+.warn{display:none;background:#fef3c7;color:#92400e;border:1px solid #fde68a;border-radius:12px;padding:12px 14px;font-size:13px;line-height:1.5;margin-bottom:12px}
+.warn.on{display:block}
+.stats{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:16px}
+.stat,.progress,.form,.expenses,.category,.shop{background:var(--card);border-radius:16px;border:1px solid var(--cb)}
+.stat{padding:16px;display:flex;align-items:center;gap:12px}
+.si{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.sl{font-size:12px;color:var(--t2);font-weight:500}.sv{font-size:18px;font-weight:700}
+.progress{padding:16px;margin-bottom:16px}
+.ph{display:flex;justify-content:space-between;margin-bottom:8px;font-size:14px;font-weight:500;color:var(--t2)}
+.pb{height:12px;background:var(--ib);border-radius:999px;overflow:hidden}
+.pf{height:100%;width:0;background:linear-gradient(90deg,#6366f1,#9333ea);border-radius:999px;transition:width .5s}
+#next{margin-top:8px;font-size:13px;color:var(--t2);font-weight:500}
+.form{padding:20px;margin-bottom:16px;display:none}.form.on{display:block}
+.ft{font-size:18px;font-weight:700;margin-bottom:16px}
+.fg{display:grid;grid-template-columns:1fr;gap:12px}
+.fgr label{display:block;font-size:12px;font-weight:500;color:var(--t2);margin-bottom:6px}
+.fgr input,.fgr select{width:100%;padding:12px;border:1px solid var(--ib);border-radius:12px;outline:none;background:var(--inp);color:var(--t1)}
+.fgr input:focus,.fgr select:focus{border-color:#6366f1;box-shadow:0 0 0 3px rgba(99,102,241,.15)}
+.fa{display:flex;justify-content:flex-end;margin-top:16px}
+.filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;align-items:center}
+.filter{padding:10px 14px;border-radius:10px;font-size:13px;font-weight:500;border:1px solid var(--ib);background:var(--card);color:var(--t2);cursor:pointer;min-height:44px;display:flex;align-items:center;user-select:none}
+.filter.active{background:#1e293b;color:#fff;border-color:#1e293b}
+[data-theme=dark] .filter.active{background:#6366f1;border-color:#6366f1}
+.sort{padding:10px 12px;border:1px solid var(--ib);border-radius:10px;font-size:13px;background:var(--card);color:var(--t1);margin-left:auto;min-height:44px}
+.expenses{overflow:hidden;margin-bottom:16px}
+.expense{padding:16px;border-bottom:1px solid var(--cb);display:flex;align-items:flex-start;gap:12px}
+.expense:last-child{border-bottom:none}
+.expense.paid{opacity:.6}
+.expense.fut{border-left:3px solid #3b82f6}
+.cb{width:48px;height:48px;border-radius:50%;border:2px solid #cbd5e1;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;font-size:22px;font-weight:700;user-select:none;color:transparent}
+.cb.checked{background:#22c55e;border-color:#22c55e;color:#fff}
+.ec{flex:1;min-width:0}
+.eh{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px}
+.en{font-size:15px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.en.paid{text-decoration:line-through;color:var(--t3)}
+.ea{font-size:15px;font-weight:700;flex-shrink:0}
+.em{display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap}
+.badge{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:8px;font-size:12px;font-weight:500;border:1px solid}
+.b-credit{background:#fee2e2;color:#b91c1c;border-color:#fecaca}
+.b-rent{background:#dbeafe;color:#1d4ed8;border-color:#bfdbfe}
+.b-subscription{background:#f3e8ff;color:#7e22ce;border-color:#e9d5ff}
+.b-shopping{background:#fef3c7;color:#92400e;border-color:#fde68a}
+.b-fut{background:#dbeafe;color:#1e40af;border-color:#93c5fd}
+.ed{font-size:13px;color:var(--t2)}
+.actions{display:flex;gap:8px;flex-wrap:wrap}
+.action{display:flex;align-items:center;gap:6px;padding:12px 16px;border-radius:10px;font-size:14px;font-weight:500;border:none;cursor:pointer;min-height:48px}
+.ae{background:#eef2ff;color:#4f46e5}.ad{background:#fef2f2;color:#dc2626}
+[data-theme=dark] .ae{background:#312e81;color:#a5b4fc}
+[data-theme=dark] .ad{background:#7f1d1d;color:#fca5a5}
+.empty{text-align:center;padding:48px 16px;color:var(--t2);font-size:14px}
+.empty div{font-size:48px;margin-bottom:12px}
+.cats{display:grid;grid-template-columns:1fr;gap:12px;margin-bottom:16px}
+.category{padding:16px}
+.ch{display:flex;align-items:center;gap:8px;margin-bottom:8px;font-size:14px;font-weight:600}
+.cc{font-size:12px;color:var(--t3);margin-left:auto;font-weight:400}
+.ct{font-size:20px;font-weight:700;margin-bottom:8px}
+.cp{height:6px;background:var(--ib);border-radius:999px;overflow:hidden;margin-bottom:4px}
+.cf{height:100%;border-radius:999px;transition:width .5s}
+.cpc{font-size:12px;color:var(--t3)}
+.shop{margin-bottom:16px;overflow:hidden}
+.sh{padding:16px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none;font-size:16px;font-weight:600}
+.st{color:var(--t2);transition:transform .3s}.st.open{transform:rotate(180deg)}
+.sc{padding:0 16px 16px;display:none}.sc.open{display:block}
+.sa{display:flex;gap:8px;margin-bottom:12px}
+.sa input{flex:1;min-width:0;padding:12px;border:1px solid var(--ib);border-radius:12px;background:var(--inp);color:var(--t1);outline:none}
+.sa button{padding:12px 20px;background:linear-gradient(135deg,#6366f1,#9333ea);color:#fff;border:none;border-radius:12px;cursor:pointer;min-height:48px}
+.sis{display:flex;flex-direction:column;gap:8px}
+.si2{display:flex;align-items:center;gap:12px;padding:12px;background:var(--inp);border-radius:12px;border:1px solid var(--ib)}
+.si2.bought{opacity:.6}
+.sck{width:28px;height:28px;border-radius:50%;border:2px solid var(--ib);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;font-size:16px;font-weight:700;color:transparent}
+.sck.checked{background:#22c55e;border-color:#22c55e;color:#fff}
+.sn{flex:1;font-size:14px;word-break:break-word}
+.sn.bought{text-decoration:line-through;color:var(--t3)}
+.sd{padding:8px;background:transparent;border:none;color:var(--t3);cursor:pointer;font-size:18px}
+.se{text-align:center;padding:24px;color:var(--t3);font-size:14px}
+.footer{text-align:center;padding:24px 16px;font-size:13px;color:var(--t3);line-height:1.8}
+@media(min-width:640px){.stats{grid-template-columns:repeat(4,1fr)}.fg{grid-template-columns:repeat(2,1fr)}.cats{grid-template-columns:repeat(3,1fr)}}
+.stats{grid-template-columns:repeat(4,1fr);gap:8px}.stat{padding:10px;flex-direction:column;align-items:flex-start;gap:2px}.si{display:none}.sv{font-size:14px}.sl{font-size:11px}.progress{padding:12px;margin-bottom:12px}
+.tabs{display:flex;gap:6px;margin-bottom:12px}.tab{flex:1;padding:10px 6px;border-radius:10px;border:1px solid var(--ib);background:var(--card);color:var(--t2);font-size:13px;font-weight:600;cursor:pointer}.tab.active{background:#6366f1;color:#fff;border-color:#6366f1}
+.expense{padding:10px 12px;gap:10px;align-items:center}.cb{width:38px;height:38px;font-size:18px}.eh{margin-bottom:4px}.em{margin-bottom:0}.er{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.ib{padding:6px;font-size:16px;cursor:pointer;border-radius:8px;user-select:none}.ib:active{background:var(--cb)}
+.expense.late{border-left:4px solid #ef4444;background:rgba(239,68,68,.07)}.expense.soon{border-left:4px solid #f59e0b;background:rgba(245,158,11,.08)}
+.chip{padding:2px 8px;border-radius:8px;font-size:12px;font-weight:600}.cr{background:#fee2e2;color:#b91c1c}.cy{background:#fef3c7;color:#92400e}.note{font-size:12px;color:var(--t3);margin-top:3px;word-break:break-word}
+.box{background:var(--card);border:1px solid var(--cb);border-radius:16px;padding:14px;margin-bottom:12px}.row{display:flex;justify-content:space-between;gap:8px;padding:4px 0;font-size:14px}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-top:8px}.cdh{text-align:center;font-size:11px;color:var(--t3)}.cd{min-height:46px;border-radius:8px;background:var(--inp);border:1px solid var(--cb);font-size:12px;padding:3px;cursor:pointer;display:flex;flex-direction:column;justify-content:space-between}
+.cd.td{border-color:#6366f1}.cd.has{background:rgba(99,102,241,.14)}.cd.ok{background:rgba(34,197,94,.2)}.cd.sel{outline:2px solid #6366f1}.cd i{font-style:normal;font-size:11px;color:var(--t2)}
+</style>
+</head>
+<body>
+<div class="header"><div class="hc">
+<div class="ht"><div class="logo">💰</div><div><h1>Мои расходы</h1><p>Ежемесячные обязательные платежи</p></div></div>
+<div class="btns">
+<button class="tt" onclick="openSync()" id="syncBtn" title="Синхронизация">☁️</button>
+<button class="tt" onclick="toggleTheme()" id="themeBtn" title="Сменить тему">🌙</button>
+<button class="btn bp" id="addBtn" onclick="toggleForm()">➕ Добавить</button>
+</div></div></div>
+<div class="app">
+<div class="warn" id="warn"></div>
+<div class="form" id="syncPanel">
+<div class="ft">☁️ Синхронизация между устройствами</div>
+<div id="syncStatus" class="ed" style="margin-bottom:12px;line-height:1.5"></div>
+<div id="syncAuth">
+<div class="fg">
+<div class="fgr"><label>Email</label><input type="email" id="syncEmail" autocomplete="username"></div>
+<div class="fgr"><label>Пароль (от 6 символов)</label><input type="password" id="syncPass" autocomplete="current-password"></div>
+</div>
+<div class="fa" style="gap:8px;flex-wrap:wrap"><button class="btn bs" onclick="window.Sync.signUp()">Создать аккаунт</button><button class="btn bp" onclick="window.Sync.signIn()">Войти</button></div>
+</div>
+<div id="syncOut" style="display:none"><button class="btn bs" onclick="window.Sync.signOut()">Выйти</button></div>
+</div>
+<div class="tools">
+<button class="btn bs bsm" onclick="exportData()">📤 Экспорт</button>
+<button class="btn bs bsm" onclick="document.getElementById('importFile').click()">📥 Импорт</button>
+<button class="btn bs bsm" onclick="resetMonth()">🔄 Сбросить оплату</button>
+<input type="file" id="importFile" accept=".json,application/json" style="display:none" onchange="importData(event)">
+</div>
+<div id="installBanner" style="display:none;background:linear-gradient(135deg,#6366f1,#9333ea);color:#fff;padding:16px;border-radius:16px;margin-bottom:16px;text-align:center">
+<div style="font-size:16px;font-weight:600;margin-bottom:8px">📱 Установить как приложение</div>
+<button id="installBtn" class="btn" style="background:#fff;color:#6366f1;margin:0 auto">📲 Установить</button>
+</div>
+<div class="stats" id="stats"></div>
+<div class="progress">
+<div class="ph"><span>Прогресс оплаты</span><span id="percent" style="color:#6366f1;font-weight:700">0%</span></div>
+<div class="pb"><div class="pf" id="pf"></div></div>
+<div id="next"></div><div id="inc" style="margin-top:6px;font-size:13px;color:var(--t2)"></div>
+</div>
+<div class="tabs"><button class="tab active" data-t="list" onclick="setTab('list')">📋 Платежи</button><button class="tab" data-t="cal" onclick="setTab('cal')">📅 Календарь</button><button class="tab" data-t="ov" onclick="setTab('ov')">📊 Обзор</button></div>
+<div class="form" id="form">
+<div class="ft" id="formTitle">➕ Новый платёж</div>
+<form onsubmit="handleSubmit(event)">
+<div class="fg">
+<div class="fgr"><label>Название</label><input type="text" id="name" placeholder="Ипотека" required></div>
+<div class="fgr" id="amountGroup"><label>Сумма (₽)</label><input type="number" id="amount" placeholder="0" min="0" step="any"></div>
+<div class="fgr" id="quantityGroup" style="display:none"><label>Количество</label><input type="number" id="quantity" min="1" value="1"></div>
+<div class="fgr"><label>Категория</label>
+<select id="category" onchange="handleCategoryChange()">
+<option value="credit">🏦 Кредит</option><option value="rent">🏠 Аренда</option><option value="subscription">📱 Подписка</option><option value="shopping">🛍️ Покупки</option>
+</select></div>
+<div class="fgr" id="debtGroup" style="display:none"><label>Остаток долга (₽) — необязательно</label><input type="number" id="debt" min="0" step="any"></div>
+<div class="fgr" id="noteGroup"><label>Заметка</label><input type="text" id="note" placeholder="Договор №, ссылка на оплату"></div>
+<div class="fgr" id="varGroup"><label style="display:flex;gap:8px;align-items:center;cursor:pointer"><input type="checkbox" id="variable" style="width:auto"> Сумма меняется каждый месяц</label></div>
+<div class="fgr" id="dateTypeGroup"><label>Тип даты</label>
+<select id="dateType" onchange="toggleDateType()"><option value="monthly">Ежемесячно (число)</option><option value="future">Одноразовый (дата)</option></select></div>
+<div class="fgr" id="dateMonthlyGroup"><label>Число месяца</label><input type="number" id="date" placeholder="1-31" min="1" max="31"></div>
+<div class="fgr" id="dateFutureGroup" style="display:none"><label>Дата платежа</label><input type="date" id="futureDate"></div>
+</div>
+<div class="fa"><button type="submit" class="btn bp">Сохранить</button></div>
+</form>
+</div>
+<div class="box" id="cal" data-tab="cal"></div><div id="ov" data-tab="ov"></div>
+<div class="filters" data-tab="list">
+<div class="filter active" data-filter="all" onclick="setFilter('all')">Все</div>
+<div class="filter" data-filter="credit" onclick="setFilter('credit')">🏦 Кредит</div>
+<div class="filter" data-filter="rent" onclick="setFilter('rent')">🏠 Аренда</div>
+<div class="filter" data-filter="subscription" onclick="setFilter('subscription')">📱 Подписка</div>
+<div class="filter" data-filter="shopping" onclick="setFilter('shopping')">🛍️ Покупки</div>
+<div class="filter" data-filter="future" onclick="setFilter('future')">📅 Будущие</div>
+<select class="sort" onchange="setSort(this.value)"><option value="date">По дате</option><option value="amount">По сумме</option><option value="name">По имени</option></select>
+</div>
+<div class="expenses" id="expenses" data-tab="list"></div>
+<div class="cats" id="cats" data-tab="ov"></div>
+<div class="shop" data-tab="list">
+<div class="sh" onclick="toggleShoppingList()"><span>🛒 Список покупок</span><span class="st" id="st">▼</span></div>
+<div class="sc" id="sc">
+<div class="sa"><input type="text" id="shopInput" placeholder="Добавить товар..." onkeypress="if(event.key==='Enter')addShoppingItem()"><button onclick="addShoppingItem()">➕</button></div>
+<div class="sis" id="sis"></div>
+</div>
+</div>
+<div class="footer">
+💡 Нажмите на кружок, чтобы отметить платёж оплаченным<br>
+🔄 Отметки об оплате сбрасываются сами в начале нового месяца<br>
+📤 Делайте экспорт раз в неделю — это резервная копия и перенос на другое устройство
+</div>
+</div>
+<script>
+'use strict';
+/* ---------- Безопасное хранилище ---------- */
+var mem={},storageOk=true;
+var store={
+ get:function(k){try{var v=localStorage.getItem(k);return v===null?(k in mem?mem[k]:null):v}catch(e){storageOk=false;return k in mem?mem[k]:null}},
+ set:function(k,v){mem[k]=v;try{localStorage.setItem(k,v);return true}catch(e){storageOk=false;return false}}
+};
+var KEY='exp_v2';
+var S={expenses:[],shopping:[],month:'',lastBackup:0,updatedAt:0,income:0};
+var editingId=null,currentFilter='all',currentSort='date',shopOpen=false;
+var CATS={credit:{label:'Кредит',icon:'🏦',color:'#ef4444'},rent:{label:'Аренда',icon:'🏠',color:'#3b82f6'},subscription:{label:'Подписка',icon:'📱',color:'#a855f7'},shopping:{label:'Покупки',icon:'🛍️',color:'#f59e0b'}};
+var DEFAULTS=[
+ {name:'Ипотека',amount:45000,dueDate:'15',category:'credit'},{name:'Автокредит',amount:18000,dueDate:'20',category:'credit'},
+ {name:'Квартира',amount:35000,dueDate:'01',category:'rent'},{name:'Коммунальные услуги',amount:7000,dueDate:'10',category:'rent'},
+ {name:'Netflix',amount:999,dueDate:'05',category:'subscription'},{name:'Spotify',amount:299,dueDate:'12',category:'subscription'},{name:'Яндекс Плюс',amount:299,dueDate:'18',category:'subscription'}];
+
+/* ---------- Утилиты ---------- */
+function $(id){return document.getElementById(id)}
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+function fmt(a){try{return new Intl.NumberFormat('ru-RU',{style:'currency',currency:'RUB',maximumFractionDigits:0}).format(a||0)}catch(e){return Math.round(a||0)+' ₽'}}
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,7)}
+function parseLocal(s){var p=String(s).split('-').map(Number);return p.length===3&&p[0]?new Date(p[0],p[1]-1,p[2]):null}
+function today0(){var d=new Date();return new Date(d.getFullYear(),d.getMonth(),d.getDate())}
+function ym(d){d=d||new Date();return d.getFullYear()+'-'+(d.getMonth()+1)}
+function dim(y,m){return new Date(y,m+1,0).getDate()}
+function plural(n,a,b,c){var m=n%100,k=n%10;if(m>10&&m<20)return c;if(k===1)return a;if(k>1&&k<5)return b;return c}
+
+function norm(e){
+ if(!e||typeof e!=='object')return null;
+ var cat=CATS[e.category]?e.category:'subscription';
+ var dt=cat==='shopping'?'shopping':(e.dateType==='future'?'future':'monthly');
+ var day=parseInt(e.dueDate,10);
+ return{id:String(e.id||uid()),name:String(e.name||'Без названия'),amount:Math.max(0,Number(e.amount)||0),note:String(e.note||''),variable:!!e.variable,debt0:Math.max(0,Number(e.debt0)||0),debt:Math.max(0,Number(e.debt)||0),hist:Array.isArray(e.hist)?e.hist.slice(-6).filter(h=>h&&h.m).map(h=>({m:String(h.m),a:Number(h.a)||0})):[],
+  quantity:Math.max(1,parseInt(e.quantity,10)||1),category:cat,paid:!!e.paid,dateType:dt,
+  dueDate:cat==='shopping'?'':String(day>=1&&day<=31?day:1),futureDate:dt==='future'&&e.futureDate?String(e.futureDate):''};
+}
+function normShop(x){return x&&x.name?{id:String(x.id||uid()),name:String(x.name),bought:!!x.bought}:null}
+
+/* ---------- Загрузка / сохранение ---------- */
+function load(){
+ var raw=store.get(KEY),ok=false;
+ if(raw){try{var d=JSON.parse(raw);S.expenses=(d.expenses||[]).map(norm).filter(Boolean);S.shopping=(d.shopping||[]).map(normShop).filter(Boolean);S.month=d.month||'';S.lastBackup=d.lastBackup||0;S.updatedAt=d.updatedAt||0;S.income=Number(d.income)||0;ok=true}catch(e){}}
+ if(!ok){ /* миграция со старой версии */
+  try{var old=store.get('exp');if(old){S.expenses=JSON.parse(old).map(norm).filter(Boolean);S.updatedAt=Date.now();ok=true}}catch(e){}
+  try{var os=store.get('shoppingList');if(os)S.shopping=JSON.parse(os).map(normShop).filter(Boolean)}catch(e){}
+ }
+ if(!ok)S.expenses=DEFAULTS.map(function(d){return norm(Object.assign({id:uid(),dateType:'monthly'},d))});
+ monthCheck();
+ save(false);
+}
+/* новый месяц: сбрасываем оплату ежемесячных платежей (на каждом устройстве сам, в облако не пишется) */
+function monthCheck(){var cur=ym();if(S.month!==cur){if(S.month)S.expenses.forEach(function(e){if(e.dateType==='monthly')e.paid=false});S.month=cur;save(false)}}
+/* touch=false: сохранить локально, не считая это правкой пользователя (в облако не отправляется) */
+function save(touch){
+ if(touch!==false)S.updatedAt=Date.now();
+ var ok=store.set(KEY,JSON.stringify(S));
+ if(touch!==false&&window.Sync)window.Sync.push();
+ return ok;
+}
+
+/* ---------- Платежи ---------- */
+function isFuture(e){if(e.category==='shopping'||e.dateType!=='future'||!e.futureDate)return false;var d=parseLocal(e.futureDate);return !!d&&d>=today0()}
+function nextDate(e){var t=today0();if(e.dateType==='future')return parseLocal(e.futureDate);var y=t.getFullYear(),m=t.getMonth();return new Date(y,m,Math.min(parseInt(e.dueDate,10)||1,dim(y,m)))}
+function render(){
+ var reg=S.expenses.filter(function(e){return e.category!=='shopping'});
+ var total=reg.reduce(function(s,e){return s+e.amount},0);
+ var paid=reg.filter(function(e){return e.paid}).reduce(function(s,e){return s+e.amount},0);
+ var cnt=reg.filter(function(e){return e.paid}).length;
+ var pct=total>0?Math.round(paid/total*100):0;
+ function st(ic,bg,l,v,col){return '<div class="stat"><div class="si" style="background:'+bg+'">'+ic+'</div><div><div class="sl">'+l+'</div><div class="sv"'+(col?' style="color:'+col+'"':'')+'>'+v+'</div></div></div>'}
+ $('stats').innerHTML=st('📊','#eef2ff','Всего',fmt(total))+st('✅','#f0fdf4','Оплачено',fmt(paid),'#16a34a')+st('⏳','#fff7ed','Осталось',fmt(total-paid),'#ea580c')+st('📋','#faf5ff','Прогресс',cnt+'/'+reg.length);
+ $('percent').textContent=pct+'%';$('pf').style.width=pct+'%';
+ renderNext(reg);
+ var list=S.expenses.filter(function(e){return currentFilter==='all'||(currentFilter==='future'?isFuture(e):e.category===currentFilter)});
+ list.sort(function(a,b){
+  if(currentSort==='amount')return b.amount-a.amount;
+  if(currentSort==='name')return a.name.localeCompare(b.name,'ru');
+  var da=a.dateType==='future'?1:0,db=b.dateType==='future'?1:0;
+  if(da&&db)return String(a.futureDate).localeCompare(String(b.futureDate));
+  if(da!==db)return da-db;
+  return (parseInt(a.dueDate,10)||0)-(parseInt(b.dueDate,10)||0);
+ });
+ $('expenses').innerHTML=list.length?list.map(rowHtml).join(''):'<div class="empty"><div>📭</div>Нет платежей. Нажмите «Добавить».</div>';
+ $('cats').innerHTML=Object.keys(CATS).map(function(k){
+  var c=CATS[k],items=S.expenses.filter(function(e){return e.category===k}),sum=items.reduce(function(s,e){return s+e.amount},0),shop=k==='shopping',p=shop||!total?0:Math.round(sum/total*100);
+  return '<div class="category"><div class="ch"><span>'+c.icon+'</span><span>'+c.label+'</span><span class="cc">'+items.length+' шт.</span></div><div class="ct">'+(shop?items.length+' шт.':fmt(sum))+'</div>'+(shop?'':'<div class="cp"><div class="cf" style="width:'+p+'%;background:'+c.color+'"></div></div>')+'<div class="cpc">'+(shop?'Не учитывается в расходах':p+'% от общей суммы')+'</div></div>';
+ }).join('');
+ renderWarn();renderExtra();
+}
+function renderNext(reg){
+ var best=null,bd=null;
+ reg.forEach(function(e){if(e.paid)return;var d=nextDate(e);if(d&&(!bd||d<bd)){bd=d;best=e}});
+ var el=$('next');
+ if(!best){el.innerHTML='✅ Все платежи оплачены';return}
+ var n=Math.round((bd-today0())/864e5),w=fmt(best.amount),nm=esc(best.name);
+ el.innerHTML=n<0?'🔴 <strong>Просрочено на '+(-n)+' '+plural(-n,'день','дня','дней')+':</strong> '+nm+' ('+w+')':n===0?'⚡ <strong>Сегодня</strong> платёж: '+nm+' ('+w+')':n===1?'⏰ <strong>Завтра</strong> платёж: '+nm+' ('+w+')':'📅 Через <strong>'+n+' '+plural(n,'день','дня','дней')+'</strong> платёж: '+nm+' ('+w+')';
+}
+function renderWarn(){
+ var w=$('warn'),msg='';
+ if(!storageOk)msg='⚠️ Браузер не позволяет сохранять данные (приватный режим или запрет cookies). Данные пропадут при закрытии вкладки — сделайте «📤 Экспорт».';
+ else if(S.expenses.length&&(!S.lastBackup||Date.now()-S.lastBackup>7*864e5))msg='💾 Давно не было резервной копии. Браузер может очистить данные сайта — нажмите «📤 Экспорт» и сохраните файл.';
+ w.textContent=msg;w.classList.toggle('on',!!msg);
+}
+
+/* ---------- Форма ---------- */
+function toggleForm(){
+ var f=$('form'),b=$('addBtn');
+ if(f.classList.contains('on')){f.classList.remove('on');b.textContent='➕ Добавить';editingId=null;clearForm()}
+ else{f.classList.add('on');b.textContent='✕ Отмена';$('formTitle').textContent=editingId?'✏️ Редактировать':'➕ Новый платёж'}
+}
+function clearForm(){
+ ['name','amount','date','futureDate','debt','note'].forEach(function(i){$(i).value=''});
+ $('quantity').value='1';$('variable').checked=false;$('dateType').value='monthly';$('category').value='subscription';handleCategoryChange();
+}
+function handleCategoryChange(){
+ var shop=$('category').value==='shopping';
+ $('dateTypeGroup').style.display=shop?'none':'block';
+ $('quantityGroup').style.display=shop?'block':'none';
+ $('amountGroup').querySelector('label').textContent=shop?'Сумма (₽) — необязательно':'Сумма (₽)';
+ $('amount').required=!shop;$('debtGroup').style.display=$('category').value==='credit'?'block':'none';$('varGroup').style.display=shop?'none':'block';
+ if(shop){$('dateMonthlyGroup').style.display='none';$('dateFutureGroup').style.display='none';$('date').required=false;$('futureDate').required=false}
+ else toggleDateType();
+}
+function toggleDateType(){
+ var m=$('dateType').value==='monthly';
+ $('dateMonthlyGroup').style.display=m?'block':'none';$('dateFutureGroup').style.display=m?'none':'block';
+ $('date').required=m;$('futureDate').required=!m;
+}
+function handleSubmit(ev){
+ ev.preventDefault();
+ var name=$('name').value.trim(),cat=$('category').value,amount=parseFloat($('amount').value)||0,q=parseInt($('quantity').value,10)||1;
+ if(!name)return;
+ if(cat!=='shopping'&&!amount){alert('Укажите сумму');return}
+ var d={name:name,amount:amount,quantity:q,category:cat,note:$('note').value.trim(),variable:$('variable').checked&&cat!=='shopping'},dv=parseFloat($('debt').value)||0;
+ if(cat==='shopping'){d.dateType='shopping';d.dueDate='';d.futureDate=''}
+ else{
+  d.dateType=$('dateType').value;
+  if(d.dateType==='monthly'){var day=parseInt($('date').value,10);if(!(day>=1&&day<=31)){alert('Число месяца: от 1 до 31');return}d.dueDate=String(day);d.futureDate=''}
+  else{var fd=$('futureDate').value;if(!fd)return;d.futureDate=fd;d.dueDate=String(parseLocal(fd).getDate())}
+ }
+ var old=editingId?S.expenses.find(function(e){return e.id===editingId}):null;
+ if(cat==='credit'){d.debt=dv;d.debt0=old&&old.debt0>=dv&&old.debt0>0?old.debt0:dv}else{d.debt=0;d.debt0=0}
+ var ne;if(old){ne=norm(Object.assign({},old,d));S.expenses[S.expenses.indexOf(old)]=ne}else{ne=norm(Object.assign({id:uid(),paid:false},d));S.expenses.push(ne)}
+ if(ne.variable)recHist(ne);
+ save();editingId=null;render();toggleForm();
+}
+function editExpense(id){
+ var e=S.expenses.find(function(x){return x.id===id});if(!e)return;
+ editingId=id;
+ $('name').value=e.name;$('amount').value=e.amount||'';$('quantity').value=e.quantity;$('note').value=e.note||'';$('variable').checked=!!e.variable;$('debt').value=e.debt||'';$('category').value=e.category;handleCategoryChange();
+ if(e.category!=='shopping'){$('dateType').value=e.dateType;toggleDateType();if(e.dateType==='future')$('futureDate').value=e.futureDate;else $('date').value=e.dueDate}
+ $('form').classList.add('on');$('addBtn').textContent='✕ Отмена';$('formTitle').textContent='✏️ Редактировать';
+ $('form').scrollIntoView({behavior:'smooth',block:'start'});
+}
+function deleteExpense(id){if(confirm('Удалить этот платёж?')){S.expenses=S.expenses.filter(function(e){return e.id!==id});save();render()}}
+function togglePaid(id){var e=S.expenses.find(function(x){return x.id===id});if(!e)return;e.paid=!e.paid;if(e.debt0>0)e.debt=e.paid?Math.max(0,e.debt-e.amount):Math.min(e.debt0,e.debt+e.amount);save();render()}
+function resetMonth(){if(confirm('Сбросить все отметки об оплате?')){S.expenses.forEach(function(e){e.paid=false});save();render()}}
+function setFilter(f){currentFilter=f;document.querySelectorAll('.filter').forEach(function(b){b.classList.toggle('active',b.getAttribute('data-filter')===f)});render()}
+function setSort(s){currentSort=s;render()}
+
+/* ---------- Экспорт / импорт ---------- */
+function exportData(){
+ S.lastBackup=Date.now();save(false);renderWarn();
+ var json=JSON.stringify({expenses:S.expenses,shoppingList:S.shopping,income:S.income},null,2);
+ var fname='expenses-'+new Date().toISOString().slice(0,10)+'.json';
+ try{
+  var file=new File([json],fname,{type:'application/json'});
+  if(navigator.canShare&&navigator.canShare({files:[file]})){navigator.share({files:[file],title:'Мои расходы'}).catch(function(){});return}
+ }catch(e){}
+ try{
+  var url=URL.createObjectURL(new Blob([json],{type:'application/json'})),a=document.createElement('a');
+  a.href=url;a.download=fname;document.body.appendChild(a);a.click();document.body.removeChild(a);
+  setTimeout(function(){URL.revokeObjectURL(url)},1000);
+ }catch(e){
+  if(navigator.clipboard)navigator.clipboard.writeText(json).then(function(){alert('Файл не создан, но данные скопированы в буфер обмена. Вставьте их в заметки.')});
+  else prompt('Скопируйте данные:',json);
+ }
+}
+function importData(ev){
+ var file=ev.target.files[0];if(!file)return;
+ var r=new FileReader();
+ r.onload=function(){
+  try{
+   var d=JSON.parse(r.result),ex=Array.isArray(d)?d:d.expenses;
+   if(!Array.isArray(ex))throw 0;
+   S.expenses=ex.map(norm).filter(Boolean);
+   S.shopping=(Array.isArray(d.shoppingList)?d.shoppingList:[]).map(normShop).filter(Boolean);
+   if(d.income!=null)S.income=Number(d.income)||0;S.lastBackup=Date.now();save();render();renderShop();
+   alert('✅ Импортировано платежей: '+S.expenses.length+', товаров: '+S.shopping.length);
+  }catch(e){alert('❌ Неверный формат файла')}
+ };
+ r.readAsText(file);ev.target.value='';
+}
+
+/* ---------- Новые возможности ---------- */
+var curTab='list',calM=new Date(new Date().getFullYear(),new Date().getMonth(),1),calSel=null;
+function sum(a){return a.reduce((s,e)=>s+e.amount,0)}
+function recHist(e){e.hist=(e.hist||[]).filter(h=>h.m!==ym());e.hist.push({m:ym(),a:e.amount});e.hist=e.hist.slice(-6)}
+function avgOf(e){return e.hist.reduce((s,h)=>s+h.a,0)/e.hist.length}
+function setAmount(id){var e=S.expenses.find(x=>x.id===id);if(!e)return;var v=prompt('Сумма за этот месяц, ₽',e.amount);if(v===null)return;v=parseFloat(String(v).replace(',','.').replace(/\s/g,''));if(!(v>=0))return;e.amount=v;recHist(e);save();render()}
+function setIncome(){var v=prompt('Ваш доход за месяц, ₽',S.income||'');if(v===null)return;v=parseFloat(String(v).replace(',','.').replace(/\s/g,''));S.income=v>0?v:0;save();render()}
+function copyExpense(id){var e=S.expenses.find(x=>x.id===id);if(!e)return;var c=norm(Object.assign({},e,{id:uid(),name:e.name+' (копия)',paid:false,hist:[]}));S.expenses.push(c);save();render();editExpense(c.id)}
+function setTab(t){curTab=t;document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('active',b.dataset.t===t));document.querySelectorAll('[data-tab]').forEach(el=>el.style.display=el.dataset.tab===t?'':'none');if(t==='cal')renderCal()}
+function rowHtml(e){
+ var c=CATS[e.category],shop=e.category==='shopping',fut=isFuture(e),n=shop||e.paid?null:Math.round((nextDate(e)-today0())/864e5),cls='',chip='',lb='';
+ if(!shop)lb=e.dateType==='future'?'📅 '+parseLocal(e.futureDate).toLocaleDateString('ru-RU'):'📅 '+e.dueDate.padStart(2,'0')+' число';
+ if(n!==null&&!isNaN(n)){if(n<0){cls=' late';chip='<span class="chip cr">Просрочен '+(-n)+' дн.</span>'}else if(n<=3){cls=' soon';chip='<span class="chip cy">'+(n===0?'Сегодня':n===1?'Завтра':'Через '+n+' дн.')+'</span>'}}
+ var amt=shop?(e.quantity>1?e.quantity+' шт.':e.amount>0?fmt(e.amount):''):fmt(e.amount);
+ if(e.variable)amt='<span style="cursor:pointer;text-decoration:underline dotted" onclick="setAmount(\''+e.id+'\')">≈ '+amt+'</span>';
+ var avg=e.variable&&e.hist.length>1?'<span class="ed">обычно ~'+fmt(avgOf(e))+'</span>':'';
+ var cr=e.debt0>0?'<div class="cp" style="margin-top:6px"><div class="cf" style="width:'+Math.round((1-e.debt/e.debt0)*100)+'%;background:#ef4444"></div></div><div class="cpc">Долг: '+fmt(e.debt)+' из '+fmt(e.debt0)+(e.debt>0&&e.amount>0?' · ещё ~'+Math.ceil(e.debt/e.amount)+' мес.':' · погашен 🎉')+'</div>':'';
+ var id='\''+e.id+'\'';
+ return '<div class="expense'+(e.paid?' paid':'')+(fut?' fut':'')+cls+'"><div class="cb'+(e.paid?' checked':'')+'" onclick="togglePaid('+id+')">✓</div><div class="ec"><div class="eh"><div class="en'+(e.paid?' paid':'')+'">'+esc(e.name)+'</div><div class="ea">'+amt+'</div></div><div class="em er"><span class="badge b-'+e.category+'">'+c.icon+' '+c.label+'</span>'+chip+(lb?'<span class="ed">'+lb+'</span>':'')+avg+'<span style="margin-left:auto"><span class="ib" onclick="editExpense('+id+')">✏️</span><span class="ib" onclick="copyExpense('+id+')">📄</span><span class="ib" onclick="deleteExpense('+id+')">🗑️</span></span></div>'+(e.note?'<div class="note">📝 '+esc(e.note)+'</div>':'')+cr+'</div></div>';
+}
+function renderExtra(){
+ var reg=S.expenses.filter(e=>e.category!=='shopping'),total=sum(reg),t=today0(),lim=new Date(t.getFullYear()+1,t.getMonth(),t.getDate()),by={},yr=0;
+ var left=S.income-total;
+ $('inc').innerHTML='💵 Доход: <b style="cursor:pointer;text-decoration:underline dotted" onclick="setIncome()">'+(S.income?fmt(S.income):'указать')+'</b>'+(S.income?' · Остаток после платежей: <b style="color:'+(left<0?'#dc2626':'#16a34a')+'">'+fmt(left)+'</b>':'');
+ reg.forEach(e=>{var a=e.amount*12;if(e.dateType==='future'){var d=parseLocal(e.futureDate);a=d&&d>=t&&d<lim?e.amount:0}by[e.category]=(by[e.category]||0)+a;yr+=a});
+ var h='<div class="box"><b>📆 За год</b><div class="row"><span>Всего платежей</span><b>'+fmt(yr)+'</b></div>'+['credit','rent','subscription'].map(k=>'<div class="row"><span>'+CATS[k].icon+' '+CATS[k].label+'</span><span>'+fmt(by[k]||0)+' <span class="ed">('+fmt((by[k]||0)/12)+'/мес.)</span></span></div>').join('')+(S.income?'<div class="row"><span>Доля дохода за год</span><span>'+Math.round(yr/(S.income*12)*100)+'%</span></div>':'')+'</div>';
+ var cr=reg.filter(e=>e.debt0>0);
+ if(cr.length)h+='<div class="box"><b>🏦 Кредиты</b>'+cr.map(e=>{var mo=e.amount>0?Math.ceil(e.debt/e.amount):0,end=new Date(t.getFullYear(),t.getMonth()+mo-1,1).toLocaleDateString('ru-RU',{month:'long',year:'numeric'});return '<div style="margin-top:10px"><div class="row"><span>'+esc(e.name)+'</span><span>'+fmt(e.debt)+'</span></div><div class="cp"><div class="cf" style="width:'+Math.round((1-e.debt/e.debt0)*100)+'%;background:#ef4444"></div></div><div class="cpc">'+(e.debt>0?'Выплачено '+Math.round((1-e.debt/e.debt0)*100)+'% · ещё ~'+mo+' мес. (до '+end+')':'Погашен 🎉')+'</div></div>'}).join('')+'<div class="row" style="margin-top:8px"><span>Всего долгов</span><b>'+fmt(cr.reduce((s,e)=>s+e.debt,0))+'</b></div></div>';
+ $('ov').innerHTML=h;
+ if(curTab==='cal')renderCal();
+}
+function dayItems(y,m,d){return S.expenses.filter(e=>{if(e.category==='shopping')return false;if(e.dateType==='future'){var x=parseLocal(e.futureDate);return x&&x.getFullYear()===y&&x.getMonth()===m&&x.getDate()===d}return Math.min(parseInt(e.dueDate,10)||1,dim(y,m))===d})}
+function calNav(k){calM=new Date(calM.getFullYear(),calM.getMonth()+k,1);calSel=null;renderCal()}
+function calPick(d){calSel=calSel===d?null:d;renderCal()}
+function renderCal(){
+ var y=calM.getFullYear(),m=calM.getMonth(),t=today0(),cur=y===t.getFullYear()&&m===t.getMonth(),first=(new Date(y,m,1).getDay()+6)%7,n=dim(y,m),tot=0,g='';
+ ['Пн','Вт','Ср','Чт','Пт','Сб','Вс'].forEach(x=>g+='<div class="cdh">'+x+'</div>');
+ for(var i=0;i<first;i++)g+='<div></div>';
+ for(var d=1;d<=n;d++){var it=dayItems(y,m,d),sm=sum(it);tot+=sm;g+='<div class="cd'+(cur&&d===t.getDate()?' td':'')+(it.length?' has':'')+(cur&&it.length&&it.every(e=>e.paid)?' ok':'')+(calSel===d?' sel':'')+'" onclick="calPick('+d+')"><b>'+d+'</b>'+(it.length?'<i>'+(sm>=1000?Math.round(sm/100)/10+'к':Math.round(sm))+'</i>':'')+'</div>'}
+ var sel=calSel?dayItems(y,m,calSel):[];
+ $('cal').innerHTML='<div class="row" style="align-items:center"><button class="btn bs bsm" onclick="calNav(-1)">◀</button><b style="text-transform:capitalize">'+calM.toLocaleDateString('ru-RU',{month:'long',year:'numeric'})+'</b><button class="btn bs bsm" onclick="calNav(1)">▶</button></div><div class="cal">'+g+'</div><div class="cpc" style="margin-top:8px">Платежей в месяце: '+fmt(tot)+' · зелёным отмечены дни, где всё оплачено</div>'+(calSel?'<div style="margin-top:8px"><b>'+calSel+'-е число</b>'+(sel.length?sel.map(e=>'<div class="row"><span>'+CATS[e.category].icon+' '+esc(e.name)+(cur&&e.paid?' ✅':'')+'</span><b>'+fmt(e.amount)+'</b></div>').join(''):'<div class="ed">Платежей нет</div>')+'</div>':'');
+}
+
+/* ---------- Список покупок ---------- */
+function toggleShoppingList(){shopOpen=!shopOpen;$('sc').classList.toggle('open',shopOpen);$('st').classList.toggle('open',shopOpen)}
+function addShoppingItem(){var i=$('shopInput'),n=i.value.trim();if(!n)return;S.shopping.push({id:uid(),name:n,bought:false});save();renderShop();i.value='';i.focus()}
+function toggleShoppingItem(id){var x=S.shopping.find(function(s){return s.id===id});if(x){x.bought=!x.bought;save();renderShop()}}
+function deleteShoppingItem(id){S.shopping=S.shopping.filter(function(s){return s.id!==id});save();renderShop()}
+function renderShop(){
+ $('sis').innerHTML=S.shopping.length?S.shopping.map(function(x){
+  return '<div class="si2'+(x.bought?' bought':'')+'"><div class="sck'+(x.bought?' checked':'')+'" onclick="toggleShoppingItem(\''+x.id+'\')">✓</div><div class="sn'+(x.bought?' bought':'')+'">'+esc(x.name)+'</div><button class="sd" onclick="deleteShoppingItem(\''+x.id+'\')">×</button></div>';
+ }).join(''):'<div class="se">Список покупок пуст</div>';
+}
+
+/* ---------- Тема ---------- */
+function setTheme(t){document.documentElement.setAttribute('data-theme',t);$('themeBtn').textContent=t==='dark'?'☀️':'🌙'}
+function toggleTheme(){var t=document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark';setTheme(t);store.set('theme',t)}
+
+/* ---------- Связка с облаком (sync.js) ---------- */
+window.App={
+ getData:function(){return{expenses:S.expenses,shopping:S.shopping,updatedAt:S.updatedAt,month:S.month,income:S.income}},
+ applyRemote:function(d){
+  S.expenses=(d.expenses||[]).map(norm).filter(Boolean);
+  S.shopping=(d.shopping||[]).map(normShop).filter(Boolean);
+  S.updatedAt=d.updatedAt||0;S.income=Number(d.income)||0;
+  if(d.month!==ym())S.expenses.forEach(function(e){if(e.dateType==='monthly')e.paid=false});
+  S.month=ym();save(false);render();renderShop();
+ }
+};
+window.Sync={push:function(){},signIn:function(){},signUp:function(){},signOut:function(){}};
+function setSyncStatus(icon,text,signedIn){
+ $('syncBtn').textContent=icon;$('syncStatus').textContent=text;
+ $('syncAuth').style.display=signedIn?'none':'block';$('syncOut').style.display=signedIn?'block':'none';
+}
+window.setSyncStatus=setSyncStatus;
+function openSync(){$('syncPanel').classList.toggle('on')}
+
+/* ---------- PWA ---------- */
+var deferredPrompt;
+window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();deferredPrompt=e;$('installBanner').style.display='block'});
+$('installBtn').addEventListener('click',function(){if(!deferredPrompt)return;deferredPrompt.prompt();deferredPrompt.userChoice.then(function(){$('installBanner').style.display='none';deferredPrompt=null})});
+window.addEventListener('appinstalled',function(){$('installBanner').style.display='none'});
+if('serviceWorker' in navigator)window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){})});
+
+/* ---------- Запуск ---------- */
+(function init(){
+ try{setTheme(store.get('theme')||'light')}catch(e){}
+ setSyncStatus('☁️','Синхронизация не подключена: проверьте файл firebase-config.js и интернет. Данные пока хранятся только на этом устройстве.',false);
+ try{load()}catch(e){console.error(e)}
+ try{render();renderShop();setTab('list')}catch(e){console.error(e);alert('Ошибка отображения: '+e.message)}
+ /* просим браузер не удалять данные сайта */
+ try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist()}catch(e){}
+ /* при возврате в приложение на следующий день — обновляем даты и месяц */
+ document.addEventListener('visibilitychange',function(){
+  if(!document.hidden){monthCheck();render()}
+ });
+})();
+</script>
+<script type="module" src="sync.js"></script>
+</body>
+</html>
