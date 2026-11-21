@@ -42,7 +42,7 @@ if (!cfg || !cfg.apiKey || cfg.apiKey.indexOf('ВСТАВЬТЕ') === 0) {
   function doPush() {
     if (!ref) return;
     const d = window.App.getData();
-    setDoc(ref, { expenses: d.expenses, shopping: d.shopping, updatedAt: d.updatedAt, month: d.month, income: d.income || 0 })
+    setDoc(ref, { expenses: d.expenses, shopping: d.shopping, updatedAt: d.updatedAt, month: d.month, income: d.income || 0, more: d.more || {} })
       .catch(e => ui('⚠️', 'Не удалось отправить: ' + (e.code || e.message), true));
   }
   function push() {
